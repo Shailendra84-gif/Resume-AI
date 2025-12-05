@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResumeAI - Build Your Perfect Resume</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --bg-light: #f9fafb;
+            --bg-white: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 4px 6px rgba(0,0,0,0.07);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: var(--shadow);
+            margin-bottom: 40px;
+        }
+
+        header .logo {
+            font-size: 28px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .nav-right {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .panel {
+            background: var(--bg-white);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .panel-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .input-group.full {
+            grid-template-columns: 1fr;
+        }
+
+        .skill-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .skill-input input {
+            flex: 1;
+        }
+
+        .skill-tag {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .skill-tag:hover::after {
+            content: '×';
+            position: absolute;
+            right: 5px;
+            top: -5px;
+        }
+
+        .resume-preview {
+            background: var(--bg-white);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 40px;
+            font-family: 'Arial', sans-serif;
+            line-height: 1.8;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .resume-header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 12px;
+        }
+
+        .resume-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .resume-contact {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .resume-section {
+            margin-bottom: 16px;
+        }
+
+        .resume-section-title {
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 4px;
+        }
+
+        .resume-entry {
+            margin-bottom: 12px;
+        }
+
+        .resume-entry-title {
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .resume-entry-subtitle {
+            font-style: italic;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .resume-entry-desc {
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .ats-score {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            background: var(--bg-light);
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .ats-score-item {
+            flex: 1;
+            text-align: center;
+        }
+
+        .ats-score-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .ats-score-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .upload-area.drag-over {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #7f1d1d;
+            border: 1px solid #fca5a5;
+        }
+
+        .payment-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .payment-modal.active {
+            display: flex;
+        }
+
+        .payment-card {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 25px rgba(0,0,0,0.15);
+        }
+
+        .close-btn {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .pricing-table {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .pricing-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pricing-row.header {
+            font-weight: bold;
+            background: var(--bg-light);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .feature-item::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .resume-preview {
+                position: static;
+            }
+
+            .input-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .success-message .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .template-card {
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .template-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .template-card.active {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .template-preview {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .template-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header>
+        <div class="container">
+            <div class="navbar">
+                <div class="logo">📄 ResumeAI</div>
+                <div class="nav-right">
+                    <span id="userEmail" style="font-size: 14px;"></span>
+                    <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="container">
+        <div class="main-layout">
+            <!-- LEFT PANEL - FORM -->
+            <div class="panel">
+                <div class="panel-title">
+                    <span>📝</span> Build Your Resume
+                </div>
+
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('personal')">Personal</button>
+                    <button class="tab" onclick="switchTab('experience')">Experience</button>
+                    <button class="tab" onclick="switchTab('education')">Education</button>
+                    <button class="tab" onclick="switchTab('skills')">Skills</button>
+                    <button class="tab" onclick="switchTab('import')">Import</button>
+                </div>
+
+                <!-- PERSONAL DETAILS TAB -->
+                <div id="personal" class="tab-content active">
+                    <div class="form-group">
+                        <label class="form-label">Select Template</label>
+                        <div class="template-grid">
+                            <div class="template-card active" onclick="selectTemplate('modern')">
+                                <div class="template-preview">📋</div>
+                                <div class="template-name">Modern</div>
+                            </div>
+                            <div class="template-card" onclick="selectTemplate('classic')">
+                                <div class="template-preview">📄</div>
+                                <div class="template-name">Classic</div>
+                            </div>
+                            <div class="template-card" onclick="selectTemplate('minimal')">
+                                <div class="template-preview">✨</div>
+                                <div class="template-name">Minimal</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-group">
+                            <label class="form-label">First Name</label>
+                            <input type="text" class="form-input" id="firstName" placeholder="John" oninput="updatePreview()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" class="form-input" id="lastName" placeholder="Doe" oninput="updatePreview()">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Professional Email</label>
+                        <input type="email" class="form-input" id="email" placeholder="john@example.com" oninput="updatePreview()">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Phone Number</label>
+                        <input type="tel" class="form-input" id="phone" placeholder="+1 (555) 123-4567" oninput="updatePreview()">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Location</label>
+                        <input type="text" class="form-input" id="location" placeholder="New York, USA" oninput="updatePreview()">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Professional Summary</label>
+                        <textarea class="form-textarea" id="summary" placeholder="Write a compelling summary about yourself..." oninput="updatePreview()"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">LinkedIn/Portfolio URL</label>
+                        <input type="url" class="form-input" id="portfolio" placeholder="https://linkedin.com/in/yourprofile" oninput="updatePreview()">
+                    </div>
+                </div>
+
+                <!-- EXPERIENCE TAB -->
+                <div id="experience" class="tab-content">
+                    <div id="experienceList"></div>
+                    <button class="btn btn-primary" onclick="addExperience()" style="width: 100%; margin-top: 20px;">
+                        + Add Experience
+                    </button>
+                </div>
+
+                <!-- EDUCATION TAB -->
+                <div id="education" class="tab-content">
+                    <div id="educationList"></div>
+                    <button class="btn btn-primary" onclick="addEducation()" style="width: 100%; margin-top: 20px;">
+                        + Add Education
+                    </button>
+                </div>
+
+                <!-- SKILLS TAB -->
+                <div id="skills" class="tab-content">
+                    <div class="form-group">
+                        <label class="form-label">Add Skills</label>
+                        <div class="skill-input">
+                            <input type="text" class="form-input" id="skillInput" placeholder="e.g., JavaScript, Python, Project Management">
+                            <button class="btn btn-primary" onclick="addSkill()">Add</button>
+                        </div>
+                    </div>
+                    <div id="skillsList"></div>
+
+                    <div style="margin-top: 30px;">
+                        <label class="form-label">🤖 AI Enhancement</label>
+                        <div class="features-grid">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="aiOptimize">
+                                <span>Optimize for ATS</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="aiEnhance">
+                                <span>Enhance Descriptions</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- IMPORT TAB -->
+                <div id="import" class="tab-content">
+                    <label class="form-label">Upload Your Existing Resume (PDF/DOC)</label>
+                    <div class="upload-area" id="uploadArea" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                        <div style="font-size: 32px; margin-bottom: 10px;">📤</div>
+                        <div style="font-weight: 600; margin-bottom: 4px;">Drag and drop your resume here</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">or click to select file</div>
+                        <input type="file" id="fileInput" style="display: none;" accept=".pdf,.doc,.docx" onchange="handleFileUpload(event)">
+                    </div>
+                    <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()" style="width: 100%; margin-top: 20px;">
+                        Browse Files
+                    </button>
+                    <div id="uploadStatus" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL - PREVIEW -->
+            <div>
+                <div class="resume-preview" id="resumePreview">
+                    <div class="resume-header">
+                        <div class="resume-name" id="previewName">Your Name</div>
+                        <div class="resume-contact" id="previewContact">email@example.com | +1 (555) 123-4567 | New York, USA</div>
+                        <div class="resume-contact" id="previewLinks"></div>
+                    </div>
+
+                    <div class="resume-section" id="summarySection" style="display: none;">
+                        <div class="resume-section-title">Professional Summary</div>
+                        <div class="resume-entry-desc" id="previewSummary"></div>
+                    </div>
+
+                    <div class="resume-section" id="experienceSection" style="display: none;">
+                        <div class="resume-section-title">Experience</div>
+                        <div id="previewExperience"></div>
+                    </div>
+
+                    <div class="resume-section" id="educationSection" style="display: none;">
+                        <div class="resume-section-title">Education</div>
+                        <div id="previewEducation"></div>
+                    </div>
+
+                    <div class="resume-section" id="skillsSection" style="display: none;">
+                        <div class="resume-section-title">Skills</div>
+                        <div class="resume-entry-desc" id="previewSkills"></div>
+                    </div>
+                </div>
+
+                <!-- ATS SCORE -->
+                <div class="ats-score">
+                    <div class="ats-score-item">
+                        <div class="ats-score-value" id="atsScore">0</div>
+                        <div class="ats-score-label">ATS Score</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="atsBar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="ats-score-item">
+                        <div class="ats-score-value" id="contentScore">0</div>
+                        <div class="ats-score-label">Content Quality</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="contentBar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACTION BUTTONS -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="downloadResume()" style="width: 100%;">
+                        📥 Download (Free Preview)
+                    </button>
+                    <button class="btn btn-success" onclick="openPayment()" style="width: 100%;">
+                        💳 Purchase & Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAYMENT MODAL -->
+    <div id="paymentModal" class="payment-modal">
+        <div class="payment-card">
+            <button class="close-btn" onclick="closePayment()">&times;</button>
+            <h2 style="margin-bottom: 10px;">Complete Your Purchase</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">Get unlimited downloads and ATS optimization</p>
+
+            <div class="pricing-table">
+                <div class="pricing-row header">
+                    <div>Plan</div>
+                    <div style="text-align: right;">Features</div>
+                    <div style="text-align: right;">Price</div>
+                </div>
+                <div class="pricing-row" onclick="selectPlan('single')">
+                    <div><input type="radio" name="plan" value="single"> Single Resume</div>
+                    <div style="text-align: right;">1 Download</div>
+                    <div style="text-align: right; font-weight: bold;">$9.99</div>
+                </div>
+                <div class="pricing-row" onclick="selectPlan('pro')">
+                    <div><input type="radio" name="plan" value="pro" checked> Pro Package</div>
+                    <div style="text-align: right;">5 Downloads</div>
+                    <div style="text-align: right; font-weight: bold;">$29.99</div>
+                </div>
+                <div class="pricing-row" onclick="selectPlan('annual')">
+                    <div><input type="radio" name="plan" value="annual"> Annual Access</div>
+                    <div style="text-align: right;">Unlimited</div>
+                    <div style="text-align: right; font-weight: bold;">$79.99</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <label class="form-label">Card Details</label>
+                <div id="card-element" style="border: 1px solid var(--border); padding: 12px; border-radius: 6px; background: white;"></div>
+                <div id="card-errors" style="color: var(--error); margin-top: 8px;"></div>
+            </div>
+
+            <button class="btn btn-success" onclick="processPayment()" style="width: 100%; margin-top: 30px; padding: 12px;">
+                💳 Pay & Download
+            </button>
+
+            <p style="text-align: center; font-size: 12px; color: var(--text-secondary); margin-top: 16px;">
+                🔒 Secure payment powered by Stripe
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let stripe, cardElement;
+        let resumeData = {
+            template: 'modern',
+            personal: {},
+            experience: [],
+            education: [],
+            skills: []
+        };
+
+        // Initialize Stripe (Note: Replace with your actual publishable key)
+        function initStripe() {
+            stripe = Stripe('pk_test_51234567890abcdefghijklmnop');
+            const elements = stripe.elements();
+            cardElement = elements.create('card');
+            cardElement.mount('#card-element');
+            cardElement.addEventListener('change', function(event) {
+                const displayError = document.getElementById('card-errors');
+                if (event.error) {
+                    displayError.textContent = event.error.message;
+                } else {
+                    displayError.textContent = '';
+                }
+            });
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function selectTemplate(template) {
+            resumeData.template = template;
+            document.querySelectorAll('.template-card').forEach(card => card.classList.remove('active'));
+            event.target.closest('.template-card').classList.add('active');
+            updatePreview();
+        }
+
+        function updatePreview() {
+            // Get personal data
+            resumeData.personal = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                location: document.getElementById('location').value,
+                summary: document.getElementById('summary').value,
+                portfolio: document.getElementById('portfolio').value
+            };
+
+            // Update preview
+            const name = `${resumeData.personal.firstName} ${resumeData.personal.lastName}`.trim() || 'Your Name';
+            document.getElementById('previewName').textContent = name;
+
+            const contact = [resumeData.personal.email, resumeData.personal.phone, resumeData.personal.location]
+                .filter(x => x).join(' | ') || 'email@example.com | +1 (555) 123-4567 | New York, USA';
+            document.getElementById('previewContact').textContent = contact;
+
+            if (resumeData.personal.portfolio) {
+                document.getElementById('previewLinks').textContent = resumeData.personal.portfolio;
+            }
+
+            if (resumeData.personal.summary) {
+                document.getElementById('summarySection').style.display = 'block';
+                document.getElementById('previewSummary').textContent = resumeData.personal.summary;
+            }
+
+            calculateAtsScore();
+        }
+
+        function addExperience() {
+            const id = Date.now();
+            resumeData.experience.push({ id });
+            renderExperience();
+        }
+
+        function addEducation() {
+            const id = Date.now();
+            resumeData.education.push({ id });
+            renderEducation();
+        }
+
+        function renderExperience() {
+            const list = document.getElementById('experienceList');
+            list.innerHTML = resumeData.experience.map((exp, idx) => `
+                <div style="margin-bottom: 20px; padding: 15px; background: var(--bg-light); border-radius: 6px;">
+                    <div class="input-group">
+                        <input type="text" class="form-input" placeholder="Job Title" value="${exp.title || ''}" 
+                            onchange="resumeData.experience[${idx}].title = this.value; updatePreview()">
+                        <input type="text" class="form-input" placeholder="Company" value="${exp.company || ''}"
+                            onchange="resumeData.experience[${idx}].company = this.value; updatePreview()">
+                    </div>
+                    <div class="input-group" style="margin-top: 10px;">
+                        <input type="month" class="form-input" value="${exp.startDate || ''}"
+                            onchange="resumeData.experience[${idx}].startDate = this.value; updatePreview()">
+                        <input type="month" class="form-input" value="${exp.endDate || ''}"
+                            onchange="resumeData.experience[${idx}].endDate = this.value; updatePreview()">
+                    </div>
+                    <textarea class="form-textarea" placeholder="Description" style="margin-top: 10px;"
+                        onchange="resumeData.experience[${idx}].description = this.value; updatePreview()">${exp.description || ''}</textarea>
+                    <button class="btn" style="background: var(--error); color: white; margin-top: 10px; width: 100%;"
+                        onclick="resumeData.experience.splice(${idx}, 1); renderExperience(); updatePreview();">Remove</button>
+                </div>
+            `).join('');
+
+            if (resumeData.experience.length > 0) {
+                document.getElementById('experienceSection').style.display = 'block';
+                document.getElementById('previewExperience').innerHTML = resumeData.experience.map(exp => `
+                    <div class="resume-entry">
+                        <div class="resume-entry-title">${exp.title || 'Job Title'}</div>
+                        <div class="resume-entry-subtitle">${exp.company || 'Company'} | ${exp.startDate || 'Start'} - ${exp.endDate || 'End'}</div>
+                        <div class="resume-entry-desc">• ${exp.description || 'Description'}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function renderEducation() {
+            const list = document.getElementById('educationList');
+            list.innerHTML = resumeData.education.map((edu, idx) => `
+                <div style="margin-bottom: 20px; padding: 15px; background: var(--bg-light); border-radius: 6px;">
+                    <input type="text" class="form-input" placeholder="School/University" value="${edu.school || ''}"
+                        onchange="resumeData.education[${idx}].school = this.value; updatePreview()">
+                    <div class="input-group" style="margin-top: 10px;">
+                        <input type="text" class="form-input" placeholder="Degree" value="${edu.degree || ''}"
+                            onchange="resumeData.education[${idx}].degree = this.value; updatePreview()">
+                        <input type="text" class="form-input" placeholder="Field of Study" value="${edu.field || ''}"
+                            onchange="resumeData.education[${idx}].field = this.value; updatePreview()">
+                    </div>
+                    <input type="month" class="form-input" placeholder="Graduation Date" style="margin-top: 10px;" value="${edu.graduationDate || ''}"
+                        onchange="resumeData.education[${idx}].graduationDate = this.value; updatePreview()">
+                    <button class="btn" style="background: var(--error); color: white; margin-top: 10px; width: 100%;"
+                        onclick="resumeData.education.splice(${idx}, 1); renderEducation(); updatePreview();">Remove</button>
+                </div>
+            `).join('');
+
+            if (resumeData.education.length > 0) {
+                document.getElementById('educationSection').style.display = 'block';
+                document.getElementById('previewEducation').innerHTML = resumeData.education.map(edu => `
+                    <div class="resume-entry">
+                        <div class="resume-entry-title">${edu.degree} in ${edu.field}</div>
+                        <div class="resume-entry-subtitle">${edu.school}</div>
+                        <div class="resume-entry-desc">Graduated: ${edu.graduationDate}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function addSkill() {
+            const input = document.getElementById('skillInput');
+            if (input.value.trim()) {
+                resumeData.skills.push(input.value.trim());
+                input.value = '';
+                renderSkills();
+                updatePreview();
+            }
+        }
+
+        function renderSkills() {
+            const list = document.getElementById('skillsList');
+            list.innerHTML = resumeData.skills.map((skill, idx) => `
+                <span class="skill-tag" onclick="resumeData.skills.splice(${idx}, 1); renderSkills(); updatePreview();">
+                    ${skill} ×
+                </span>
+            `).join('');
+
+            if (resumeData.skills.length > 0) {
+                document.getElementById('skillsSection').style.display = 'block';
+                document.getElementById('previewSkills').textContent = resumeData.skills.join(' • ');
+            }
+        }
+
+        function calculateAtsScore() {
+            let score = 0;
+            let contentScore = 0;
+
+            // Word count (25 points max)
+            const totalText = Object.values(resumeData.personal).join(' ');
+            const wordCount = totalText.split(/\s+/).length;
+            score += Math.min(25, (wordCount / 12) * 25);
+
+            // Skills (35 points max)
+            score += Math.min(35, resumeData.skills.length * 4);
+
+            // Experience (40 points max)
+            score += Math.min(40, resumeData.experience.length * 20);
+
+            // Content quality
+            contentScore += resumeData.personal.summary ? 25 : 0;
+            contentScore += resumeData.experience.length >= 3 ? 25 : 10;
+            contentScore += resumeData.education.length >= 1 ? 25 : 10;
+            contentScore += resumeData.skills.length >= 5 ? 25 : 10;
+
+            document.getElementById('atsScore').textContent = Math.round(score);
+            document.getElementById('contentScore').textContent = contentScore;
+            document.getElementById('atsBar').style.width = Math.min(score, 100) + '%';
+            document.getElementById('contentBar').style.width = contentScore + '%';
+        }
+
+        function downloadResume() {
+            alert('Preview download feature. Upgrade to get full formatted resume!');
+        }
+
+        function openPayment() {
+            if (!stripe) initStripe();
+            document.getElementById('paymentModal').classList.add('active');
+        }
+
+        function closePayment() {
+            document.getElementById('paymentModal').classList.remove('active');
+        }
+
+        function selectPlan(plan) {
+            document.querySelectorAll('input[name="plan"]').forEach(radio => {
+                radio.checked = (radio.value === plan);
+            });
+        }
+
+        function processPayment() {
+            const plan = document.querySelector('input[name="plan"]:checked').value;
+            const prices = { single: 999, pro: 2999, annual: 7999 };
+            
+            alert(`Processing payment for ${plan} plan ($${(prices[plan] / 100).toFixed(2)}).\n\nNote: This is a demo. In production, integrate with real Stripe API.`);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('uploadArea').classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            document.getElementById('uploadArea').classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('uploadArea').classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload({ target: { files } });
+            }
+        }
+
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('uploadStatus').innerHTML = `
+                    <div class="alert alert-success">
+                        ✓ File uploaded: ${file.name}\n\nNote: In production, this would parse the resume using pdf2json or similar library and auto-fill the form.
+                    </div>
+                `;
+            }
+        }
+
+        function logout() {
+            alert('Logout successful');
+            // In production, clear session and redirect
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            document.getElementById('userEmail').textContent = 'user@example.com';
+            updatePreview();
+        };
+
+        // Allow Enter key to add skills
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.target.id === 'skillInput') {
+                addSkill();
+            }
+        });
+    </script>
+</body>
+</html>
